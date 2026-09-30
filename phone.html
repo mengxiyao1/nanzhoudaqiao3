@@ -891,15 +891,10 @@ function getBarOption(data, ids) {
             { type: 'slider', yAxisIndex: 0, start: 0, end: 32, width: 16, right: 4,
               borderColor: 'rgba(92,161,221,0.5)', fillerColor: 'rgba(7,118,181,0.35)',
               handleStyle: { color: '#66ccff' }, textStyle: { color: '#fff', fontSize: 11 },
-              brushSelect: false, filterMode: 'none' },
-            { type: 'inside', xAxisIndex: 0, start: 0, end: 78, zoomOnMouseWheel: false, moveOnMouseMove: true, moveOnMouseWheel: false, filterMode: 'none' },
-            { type: 'slider', xAxisIndex: 0, start: 0, end: 78, height: 12, bottom: 2, left: 10, right: 26,
-              borderColor: 'rgba(92,161,221,0.5)', fillerColor: 'rgba(7,118,181,0.35)',
-              handleStyle: { color: '#66ccff' }, textStyle: { color: '#fff', fontSize: 10 },
               brushSelect: false, filterMode: 'none' }
         ],
         xAxis: {
-            min: +(bMean * 0.9).toFixed(2),
+            min: 0,
             max: 8400,
             axisLine: { lineStyle: { color: '#4790ea' } },
             splitLine: { show: false },
