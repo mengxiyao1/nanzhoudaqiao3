@@ -1006,11 +1006,33 @@
 
         function onclickDraw(id_sensor,id_content) {
             if(document.getElementById(id_sensor).checked==false) {
-                for (i = 0; i < option.series.length; i++){
+                for (var i = 0; i < option.series.length; i++){
                     if (option.series[i].name==id_content)
                     {
-                        option.series.splice(i, 2);
+                        option.series.splice(i, 1);
+                        i--;
                     }
+                }
+                // 同步从图例中移除
+                for (var li = 0; li < option.legend.data.length; li++){
+                    if (option.legend.data[li]==id_content){
+                        option.legend.data.splice(li, 1);
+                        li--;
+                    }
+                }
+                // 重算 Y 轴范围
+                var gSum = 0, gCnt = 0;
+                for (var si = 0; si < option.series.length; si++) {
+                    var sd = option.series[si].data || [];
+                    for (var di = 0; di < sd.length; di++) {
+                        var v = Number(sd[di]);
+                        if (!isNaN(v)) { gSum += v; gCnt++; }
+                    }
+                }
+                if (gCnt > 0) {
+                    var gMean = gSum / gCnt;
+                    option.yAxis[0].max = +(gMean * 1.1).toFixed(2);
+                    option.yAxis[0].min = +(gMean * 0.9).toFixed(2);
                 }
                 chart.setOption(option,true);
                 return;
@@ -1035,6 +1057,21 @@
                         // console.log(data);
                         var dataObject = jQuery.parseJSON(typeof data === "string" ? data : JSON.stringify(data));
                         console.log(dataObject.id_content);
+                        // 按时间范围过滤数据，与动态版 waveHistory 的 whereTime between [bgTime,endTime] 保持一致
+                        var _bgT = String(document.getElementById("bgTime").value).replace('T', ' ');
+                        var _enT = String(document.getElementById("endTime").value).replace('T', ' ');
+                        var _fDate = [], _fData = [];
+                        if (dataObject.date && dataObject.data) {
+                            for (var _fi = 0; _fi < dataObject.date.length; _fi++) {
+                                var _dt = String(dataObject.date[_fi]);
+                                if (_dt >= _bgT && _dt <= _enT) {
+                                    _fDate.push(_dt);
+                                    _fData.push(Math.round(Number(dataObject.data[_fi]) * 100) / 100);
+                                }
+                            }
+                            dataObject.date = _fDate;
+                            dataObject.data = _fData;
+                        }
                         var randColor=randomHexColor();
                         var randColor;
                         randColor=randomHexColor();
@@ -1043,18 +1080,12 @@
                                     name: dataObject.id_content,
                                     type: 'line',
                                     data: dataObject.data,
-                                    lineStyle: {
-                                        normal: {
-                                            // color: randColor
-                                        }
-                                    },
                                     markPoint: {
                                         data: [
                                             { type: 'max', name: '最大值' },
                                             { type: 'min', name: '最小值' }
                                         ],
                                         itemStyle:{
-                                            //  color:randColor
                                             normal:{
                                                 label:{
                                                     color: "#ffffff",
@@ -1067,27 +1098,25 @@
                                             { type: 'average', name: '平均值' }
                                         ],
                                         lineStyle:{
-                                            //  color:randColor
                                         }
                                     }
                                 };
-                                stdForce=dataObject.std_Force;
                                 //console.log(randomHexColor);
                                 option.legend.data.push(dataObject.id_content);
                                 option.series.push(item);
-                                var stdForceMax=stdForce*1.1;
-                                var stdForceMin=stdForce*0.9;
-                                console.log(stdForceMax);
-                                //var stdForceMax=500;
-                                //var stdForceMin=-500;
-                                if(option.series.length<=1){
-                                option.yAxis[0].max=stdForceMax;
-                                option.yAxis[0].min=stdForceMin;
-                                }else{
-                                if(option.yAxis[0].max<stdForceMax)
-                                option.yAxis[0].max=stdForceMax;
-                                if(option.yAxis[0].min>stdForceMin)
-                                option.yAxis[0].min=stdForceMin;
+                                // 根据所有序列的真实数据计算 Y 轴范围（带 5% 边距），避免折线被裁剪
+                                var gSum = 0, gCnt = 0;
+                                for (var si = 0; si < option.series.length; si++) {
+                                    var sd = option.series[si].data || [];
+                                    for (var di = 0; di < sd.length; di++) {
+                                        var v = Number(sd[di]);
+                                        if (!isNaN(v)) { gSum += v; gCnt++; }
+                                    }
+                                }
+                                if (gCnt > 0) {
+                                    var gMean = gSum / gCnt;
+                                    option.yAxis[0].max = +(gMean * 1.1).toFixed(2);
+                                    option.yAxis[0].min = +(gMean * 0.9).toFixed(2);
                                 }
                                 if (dataObject.date.length > option.xAxis[0].data.length)
                                     option.xAxis[0].data = dataObject.date;
@@ -1122,5 +1151,14 @@
     var _time = d.getFullYear() + '-' +dM+ '-' + dDay+ 'T' + dHour + ':' + dMinut ;
     return _time;
     }
+    // 默认加载两条对比曲线（下游J9 / 下游J11），让页面打开即有数据
+    window.addEventListener('load', function(){
+        setTimeout(function(){
+            var d1 = document.getElementById('s48');
+            var d2 = document.getElementById('s46');
+            if (d1) d1.click();
+            if (d2) d2.click();
+        }, 300);
+    });
     </script>
 </html>

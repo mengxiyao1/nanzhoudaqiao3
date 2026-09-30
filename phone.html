@@ -872,7 +872,7 @@ for (var i = 0; i < 24; i++) {
 
 function getBarOption(data, ids) {
     var maxVal = Math.max.apply(null, data.map(function(v) { return Number(v) || 0; }));
-    var xMax = Math.ceil(maxVal * 1.28);
+    var xMax = 8400;
     return {
         grid: { left: 10, top: 8, bottom: 22, right: 22, containLabel: true },
         dataZoom: [

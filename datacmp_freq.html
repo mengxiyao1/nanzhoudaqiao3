@@ -946,7 +946,7 @@
             axisLabel: {
                 color: '#fff', 
                 formatter: function(value) {
-                    return Math.round(value);
+                    return Number(value.toFixed(2));
                 }
             },
             axisTick: {
@@ -1034,6 +1034,25 @@
                         console.log("count:" + count);
                         // console.log(data);
                         var dataObject = jQuery.parseJSON(typeof data === "string" ? data : JSON.stringify(data));
+                        // 与动态版一致：按 [起始时间, 结束时间] 过滤数据（默认近7天），避免早期 0 值把纵轴拉宽
+                        var _bgT = new Date(sensorIn.bgTime).getTime();
+                        var _enT = new Date(sensorIn.endTime).getTime();
+                        var _fd = [], _fdata = [], _sum = 0;
+                        for (var _k = 0; _k < dataObject.date.length; _k++) {
+                            var _t = new Date(String(dataObject.date[_k]).replace(/-/g, '/')).getTime();
+                            if (_t >= _bgT && _t <= _enT) {
+                                _fd.push(dataObject.date[_k]);
+                                var _v = Number(dataObject.data[_k]);
+                                _fdata.push(_v);
+                                _sum += _v;
+                            }
+                        }
+                        dataObject.date = _fd;
+                        dataObject.data = _fdata;
+                        var _n = _fdata.length;
+                        var _std = _n > 0 ? _sum / _n : 0;
+                        if (_n > 0 && _fdata[_n - 1] > 1.5 * _std) { _std = _fdata[_n - 1]; }
+                        dataObject.std_Force = _std;
                         console.log(dataObject.id_content);
                         var randColor=randomHexColor();
                         var randColor;
@@ -1075,8 +1094,8 @@
                                 //console.log(randomHexColor);
                                 option.legend.data.push(dataObject.id_content);
                                 option.series.push(item);
-                                var stdForceMax=stdForce+1;
-                                var stdForceMin=stdForce-1;
+                                var stdForceMax=stdForce*1.1;
+                                var stdForceMin=stdForce*0.9;
                                 console.log(stdForceMax);
                                 //var stdForceMax=500;
                                 //var stdForceMin=-500;
