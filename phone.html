@@ -828,6 +828,15 @@ box.addEventListener('touchend', function(e) {
 var myChart = echarts.init(document.getElementById('chart'));
 var mChart = null;
 
+function _meanVal(arr) {
+    var s = 0, n = 0;
+    for (var i = 0; i < arr.length; i++) {
+        var v = Number(arr[i]);
+        if (!isNaN(v)) { s += v; n++; }
+    }
+    return n > 0 ? s / n : 0;
+}
+
 function parseApiData(data) {
     if (data == null) return null;
     if (typeof data === 'string') {
@@ -849,6 +858,9 @@ function applyInfoChart(data) {
     if (!obj || !obj.date || !obj.data) return;
     maxValue.xAxis.data = obj.date;
     maxValue.series[0].data = obj.data;
+    var lMean = _meanVal(obj.data);
+    maxValue.yAxis.min = +(lMean * 0.9).toFixed(2);
+    maxValue.yAxis.max = +(lMean * 1.1).toFixed(2);
     var chart = ensureMChart();
     chart.setOption(maxValue, true);
     setTimeout(function() { chart.resize(); }, 80);
@@ -871,8 +883,7 @@ for (var i = 0; i < 24; i++) {
 }
 
 function getBarOption(data, ids) {
-    var maxVal = Math.max.apply(null, data.map(function(v) { return Number(v) || 0; }));
-    var xMax = 8400;
+    var bMean = _meanVal(data);
     return {
         grid: { left: 10, top: 8, bottom: 22, right: 22, containLabel: true },
         dataZoom: [
@@ -888,8 +899,8 @@ function getBarOption(data, ids) {
               brushSelect: false, filterMode: 'none' }
         ],
         xAxis: {
-            min: 0,
-            max: xMax,
+            min: +(bMean * 0.9).toFixed(2),
+            max: +(bMean * 1.1).toFixed(2),
             axisLine: { lineStyle: { color: '#4790ea' } },
             splitLine: { show: false },
             axisLabel: { color: '#ffffff', fontSize: 12 }
